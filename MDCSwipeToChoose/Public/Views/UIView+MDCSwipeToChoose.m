@@ -106,7 +106,7 @@ const void * const MDCViewStateKey = &MDCViewStateKey;
     UIPanGestureRecognizer *panGestureRecognizer =
     [[UIPanGestureRecognizer alloc] initWithTarget:self
                                             action:action];
-    [self addGestureRecognizer:panGestureRecognizer];
+    [self addGestureRecognizer:panGestureRecognizer]; 
 }
 
 #pragma mark Translation
@@ -126,9 +126,12 @@ const void * const MDCViewStateKey = &MDCViewStateKey;
             [self mdc_executeOnPanBlockForTranslation:CGPointZero];
             break;
     }
+    [[self viewWithTag:42] setAlpha:0];
+    [[self viewWithTag:43] setAlpha:0];
 }
 
 - (void)mdc_returnToOriginalCenter {
+    
     [UIView animateWithDuration:self.mdc_options.swipeCancelledAnimationDuration
                           delay:0.0
                         options:self.mdc_options.swipeCancelledAnimationOptions
@@ -213,9 +216,9 @@ const void * const MDCViewStateKey = &MDCViewStateKey;
 }
 
 - (MDCSwipeDirection)mdc_directionOfExceededThreshold {
-    if (self.center.x > self.mdc_viewState.originalCenter.x + self.mdc_options.threshold) {
+    if ([[self viewWithTag:43] alpha] > .5) { //self.center.x > self.mdc_viewState.originalCenter.x + self.mdc_options.threshold) {
         return MDCSwipeDirectionRight;
-    } else if (self.center.x < self.mdc_viewState.originalCenter.x - self.mdc_options.threshold) {
+    } else if ([[self viewWithTag:42] alpha] > .5) { //;self.center.x < self.mdc_viewState.originalCenter.x - self.mdc_options.threshold) {
         return MDCSwipeDirectionLeft;
     } else {
         return MDCSwipeDirectionNone;
@@ -233,9 +236,9 @@ const void * const MDCViewStateKey = &MDCViewStateKey;
         // If the pan gesture originated at the top half of the view, rotate the view
         // away from the center. Otherwise, rotate towards the center.
         if ([panGestureRecognizer locationInView:view].y < view.center.y) {
-            self.mdc_viewState.rotationDirection = MDCRotationAwayFromCenter;
+//            self.mdc_viewState.rotationDirection = MDCRotationAwayFromCenter;
         } else {
-            self.mdc_viewState.rotationDirection = MDCRotationTowardsCenter;
+//            self.mdc_viewState.rotationDirection = MDCRotationTowardsCenter;
         }
     } else if (panGestureRecognizer.state == UIGestureRecognizerStateEnded) {
         // Either move the view back to its original position or move it off screen.
@@ -244,10 +247,22 @@ const void * const MDCViewStateKey = &MDCViewStateKey;
         // Update the position and transform. Then, notify any listeners of
         // the updates via the pan block.
         CGPoint translation = [panGestureRecognizer translationInView:view];
-        view.center = MDCCGPointAdd(self.mdc_viewState.originalCenter, translation);
-        [self mdc_rotateForTranslation:translation
-                     rotationDirection:self.mdc_viewState.rotationDirection];
-        [self mdc_executeOnPanBlockForTranslation:translation];
+        //BM - calculate alpha change
+        
+        CGFloat alphaChange = MDCCGPointAdd(self.mdc_viewState.originalCenter, translation).x / 320;
+        NSLog(@"Alpha 1: %f", alphaChange);
+        if(alphaChange > .5) {
+            alphaChange = alphaChange - .5;
+            [[self viewWithTag:42] setAlpha:alphaChange];
+        } else {
+            alphaChange = .5 - alphaChange;
+            [[self viewWithTag:43] setAlpha:alphaChange];
+        }
+        NSLog(@"Alpha 2: %f", alphaChange);
+        
+//        [self mdc_rotateForTranslation:translation
+//                     rotationDirection:self.mdc_viewState.rotationDirection];
+//        [self mdc_executeOnPanBlockForTranslation:translation];
     }
 }
 
